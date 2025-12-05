@@ -71,23 +71,29 @@ def mostrar_login():
             if not usuario.empty:
                 # ¡ÉXITO!
                 st.session_state['logueado'] = True
+                
+                # --- CORRECCIÓN AQUÍ ---
+                # Usamos 'usuario_nombre' para que coincida con lo que pide el menú principal
+                # Asegúrate que 'nombres' coincida con la cabecera de tu Excel (columna B)
                 st.session_state['usuario_nombre'] = usuario.iloc[0]['nombres']
                 st.session_state['usuario_codigo'] = usuario.iloc[0]['codigo']
+                
                 st.rerun()
-            else:
-                st.error("❌ Código no encontrado en el padrón actual.")
-                st.info("Si eres cachimbo, contacta a tu delegado.")
 
 # ---------------------------------------------------------
 # APP PRINCIPAL (DESPUÉS DEL LOGIN)
 # ---------------------------------------------------------
 def mostrar_app_principal():
-    # Barra lateral (Sidebar)
     with st.sidebar:
-        st.write(f"👷‍♂️ **Hola, {st.session_state['usuario_nombre']}**")
-        st.caption(f"ID: {st.session_state['usuario_codigo']}")
-        st.divider()
+        # --- CORRECCIÓN AQUÍ ---
+        # Usamos .get() para que si no encuentra el nombre, ponga "Estudiante" en vez de dar error
+        nombre_mostrar = st.session_state.get('usuario_nombre', 'Estudiante')
+        codigo_mostrar = st.session_state.get('usuario_codigo', '---')
         
+        st.write(f"👷‍♂️ **Hola, {nombre_mostrar}**")
+        st.caption(f"ID: {codigo_mostrar}")
+
+        # ... resto del código ...
         menu = st.radio("Navegación", 
             ["Inicio", "Mapa Minero 🗺️", "Laboratorios 🔬", "Normativa ⚖️", "Facultad 🏫"]
         )
