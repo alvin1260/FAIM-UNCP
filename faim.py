@@ -12,33 +12,36 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# GESTIÓN DE DATOS (CORREGIDO)
+# GESTIÓN DE DATOS (VERSIÓN TOLERANTE A ERRORES)
 # ---------------------------------------------------------
 @st.cache_data(ttl=600)
 def cargar_padron_alumnos():
-    """
-    Conecta con Google Sheets usando la cuenta de servicio.
-    """
-    # 1. PEGA AQUÍ TU LINK ENTRE LAS COMILLAS
-    url_sheet = "https://docs.google.com/spreadsheets/d/15IDFloqIsKMEUk6_GqY-kf16HdSeycwwFzjh8_yy9rw/edit" 
+    # PEGA TU LINK AQUÍ
+    url_sheet = "https://docs.google.com/spreadsheets/d/15IDFloqIsKMEUk6_GqY-kf16HdSeycwwFzjh8_yy9rw/edit?pli=1&gid=0#gid=0" 
 
     try:
-        # Crea la conexión
         conn = st.connection("gsheets", type=GSheetsConnection)
-        
-        # Leemos ESPECIFICANDO la hoja explícitamente
         df = conn.read(spreadsheet=url_sheet)
-        
-        # Limpieza de datos
         df = df.astype(str)
         
-        # Verificar que la columna 'codigo' exista antes de procesar
+        # --- LIMPIEZA AUTOMÁTICA DE CABECERAS ---
+        # Esto convierte "CÓDIGO " -> "codigo"
+        df.columns = df.columns.str.lower().str.strip()
+        
+        # Validación
         if 'codigo' not in df.columns:
-            st.error("Error: Tu Excel no tiene una columna llamada 'codigo' (todo minúscula).")
-            return pd.DataFrame() # Retorna vacío seguro
+            st.error("⚠️ Error de Formato en Excel")
+            st.write("El sistema buscaba la columna: `codigo`")
+            st.write("Pero encontró estas columnas en tu Excel:", df.columns.tolist())
+            # Retornamos un DataFrame vacío pero con la estructura correcta para que no explote
+            return pd.DataFrame(columns=['codigo', 'nombres'])
             
         df['codigo'] = df['codigo'].str.strip().str.upper()
         return df
+        
+    except Exception as e:
+        st.error(f"Error de conexión: {e}")
+        return pd.DataFrame(columns=['codigo', 'nombres'])
         
     except Exception as e:
         # Muestra el error exacto en pantalla para poder ayudarte
