@@ -12,27 +12,38 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# GESTIÓN DE DATOS (CONEXIÓN SEGURA)
+# GESTIÓN DE DATOS (CORREGIDO)
 # ---------------------------------------------------------
 @st.cache_data(ttl=600)
 def cargar_padron_alumnos():
     """
-    Conecta con Google Sheets usando la cuenta de servicio (Service Account).
-    Retorna un DataFrame limpio.
+    Conecta con Google Sheets usando la cuenta de servicio.
     """
-    # Crea la conexión usando los datos de secrets.toml
-    conn = st.connection("gsheets", type=GSheetsConnection)
-    
-    # Lee los datos. Asegúrate que tu Sheet tenga cabeceras: 'codigo' y 'nombres'
+    # 1. PEGA AQUÍ TU LINK ENTRE LAS COMILLAS
+    url_sheet = "https://docs.google.com/spreadsheets/d/15IDFloqIsKMEUk6_GqY-kf16HdSeycwwFzjh8_yy9rw/edit" 
+
     try:
-        df = conn.read()
-        # Limpieza de datos crítica
-        df = df.astype(str) # Todo a texto
-        df['codigo'] = df['codigo'].str.strip().str.upper() # Estandarizar
+        # Crea la conexión
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        
+        # Leemos ESPECIFICANDO la hoja explícitamente
+        df = conn.read(spreadsheet=url_sheet)
+        
+        # Limpieza de datos
+        df = df.astype(str)
+        
+        # Verificar que la columna 'codigo' exista antes de procesar
+        if 'codigo' not in df.columns:
+            st.error("Error: Tu Excel no tiene una columna llamada 'codigo' (todo minúscula).")
+            return pd.DataFrame() # Retorna vacío seguro
+            
+        df['codigo'] = df['codigo'].str.strip().str.upper()
         return df
+        
     except Exception as e:
-        st.error(f"Error conectando a la base de datos: {e}")
-        return pd.DataFrame() # Retorna vacío si falla
+        # Muestra el error exacto en pantalla para poder ayudarte
+        st.error(f"Error conectando a Google Sheets: {e}")
+        return pd.DataFrame()
 
 # ---------------------------------------------------------
 # INTERFAZ DE LOGIN
